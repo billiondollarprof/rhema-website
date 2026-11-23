@@ -1,0 +1,50 @@
+# deploy.yml: puts the website on Cloudflare.
+#   testing branch -> rhema-website-testing (web-testing.rhemamedical.app)
+#   main branch    -> rhema-website (web.rhemamedical.app)
+# The checks run first; a red check deploys nothing.
+# Needs two repository secrets: CLOUDFLARE_API_TOKEN (Workers edit, on
+# the hospital's account) and CLOUDFLARE_ACCOUNT_ID.
+name: Deploy
+
+on:
+  push:
+    branches: [testing, main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-${{ github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+      - name: Check the website
+        run: node scripts/check.mjs
+      - name: Deploy to Cloudflare
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          if [ -z "$CLOUDFLARE_API_TOKEN" ] || [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then
+            echo "The Cloudflare secrets are not set yet: nothing deployed."
+            exit 1
+          fi
+          if [ "${{ github.ref_name }}" = "main" ]; then target=""; else target="--env testing"; fi
+          npx --yes wrangler@4 deploy $target
+      - name: Check the address answers
+        run: |
+          if [ "${{ github.ref_name }}" = "main" ]; then url=https://web.rhemamedical.app/; else url=https://web-testing.rhemamedical.app/; fi
+          for i in 1 2 3 4 5 6; do
+            if curl -fsS "$url" | grep -q "Rhema Medical Centre"; then echo "Live and answering: $url"; exit 0; fi
+            sleep 20
+          done
+          echo "The address did not answer with the website: $url"
+          exit 1

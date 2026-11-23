@@ -1,0 +1,21 @@
+# _headers: the browser protections Cloudflare sends with every file.
+#
+# Content-Security-Policy: the page runs only its own code; fonts from
+#   Google Fonts; videos may play only from TikTok, YouTube (no cookies)
+#   and Instagram (request 228). Pictures may come from any https address,
+#   because a video's cover is hosted by its service.
+# The rest: https only, no sniffing of file types, and no other site may
+#   show this website inside a frame.
+# Never: loosen these to make something work without saying why here.
+/*
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https:; frame-src https://www.tiktok.com https://www.youtube-nocookie.com https://www.instagram.com; connect-src 'self' https://*.supabase.co; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'
+  Strict-Transport-Security: max-age=31536000
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()
+
+/img/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/content/*
+  Cache-Control: no-store

@@ -1,0 +1,34 @@
+// wrangler.jsonc: how Cloudflare serves the Rhema website.
+//
+// Why: Anthony, 2026-11-23 (request 228): the website lives on the
+// hospital's own Cloudflare account (not Vercel, "we don't want to pay"),
+// at web.rhemamedical.app. It is plain files: no server code.
+// Cloudflare makes the DNS record and the certificate for the address
+// itself, because rhemamedical.app is on the same account.
+//
+// Never: point this at the app's Worker (rhema-hospital), or give it a
+// secret. The website holds nothing private.
+{
+  "$schema": "https://unpkg.com/wrangler/config-schema.json",
+  "name": "rhema-website",
+  "compatibility_date": "2026-10-01",
+  "assets": {
+    "directory": "public",
+    // An unknown address answers with the page, never a bare error.
+    "not_found_handling": "single-page-application",
+  },
+  "workers_dev": true,
+  "routes": [{ "pattern": "web.rhemamedical.app", "custom_domain": true }],
+  // The testing copy: its own Worker and its own address.
+  "env": {
+    "testing": {
+      "name": "rhema-website-testing",
+      "workers_dev": true,
+      "routes": [{ "pattern": "web-testing.rhemamedical.app", "custom_domain": true }],
+      "assets": {
+        "directory": "public",
+        "not_found_handling": "single-page-application",
+      },
+    },
+  },
+}
