@@ -42,7 +42,8 @@ jobs:
       - name: Check the address answers
         run: |
           if [ "${{ github.ref_name }}" = "main" ]; then url=https://web.rhemamedical.app/; else url=https://web-testing.rhemamedical.app/; fi
-          for i in 1 2 3 4 5 6; do
+          # A brand new address can take a few minutes to spread: up to 5 minutes.
+          for i in $(seq 1 15); do
             if curl -fsS "$url" | grep -q "Rhema Medical Centre"; then echo "Live and answering: $url"; exit 0; fi
             sleep 20
           done
